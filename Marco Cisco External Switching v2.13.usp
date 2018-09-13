@@ -1,0 +1,593 @@
+
+/*******************************************************************************************
+  SIMPL+ Module Information
+  (Fill in comments below)
+*******************************************************************************************/
+/*
+Dealer Name:
+System Name:
+System Number:
+Programmer:JGK
+Comments:
+*/
+
+/*******************************************************************************************
+  Compiler Directives
+  (Uncomment and declare compiler directives as needed)
+*******************************************************************************************/
+// #ENABLE_DYNAMIC
+// #SYMBOL_NAME ""
+// #HINT ""
+// #DEFINE_CONSTANT
+// #CATEGORY "" 
+// #PRINT_TO_TRACE
+// #DIGITAL_EXPAND 
+// #ANALOG_SERIAL_EXPAND 
+// #OUTPUT_SHIFT 
+// #HELP_PDF_FILE ""
+#DEFAULT_VOLATILE
+#ENABLE_STACK_CHECKING
+#ENABLE_TRACE
+// #ENCODING_ASCII
+// #ENCODING_UTF16
+// #ENCODING_INHERIT_FROM_PARENT
+// #ENCODING_INHERIT_FROM_PROGRAM
+
+#HELP_BEGIN
+   The Source_X_Names must be named unique from one another.
+#HELP_END
+
+
+/*******************************************************************************************
+  Include Libraries
+  (Uncomment and include additional libraries as needed)
+*******************************************************************************************/
+// #CRESTRON_LIBRARY ""
+// #USER_LIBRARY ""
+
+/*******************************************************************************************
+  DIGITAL, ANALOG and SERIAL INPUTS and OUTPUTS
+  (Uncomment and declare inputs and outputs as needed)
+*******************************************************************************************/
+ DIGITAL_INPUT codecIsOnline, codecIsOffline, _skip_,_skip_,_skip_,_skip_,_skip_, input_1_is_active, input_2_is_active, input_3_is_active, input_4_is_active, input_5_is_active, Input_6_is_active,
+																	input_7_is_active, input_8_is_active, input_9_is_active, input_10_is_active, input_11_is_active, input_12_is_active, input_13_is_active,
+																    input_14_is_active, input_15_is_active, input_16_is_active;
+ ANALOG_INPUT _skip_,_skip_;
+// STRING_INPUT 
+ BUFFER_INPUT _skip_,_skip_,_skip_,_skip_,From_Device$[10000];
+
+ DIGITAL_OUTPUT  _skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,
+			     input_selected_fb[16];
+ ANALOG_OUTPUT _skip_,_skip_,_skip_,To_Switcher,_skip_;
+ STRING_OUTPUT _skip_,To_Device$;
+
+
+/*******************************************************************************************
+  Parameters
+  (Uncomment and declare parameters as needed)
+*******************************************************************************************/
+ INTEGER_PARAMETER _skip_,_skip_,_skip_,_skip_,_skip_,externalSources,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,
+						_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,_skip_,
+														   Switcher_input_1 ,Switcher_input_2 ,Switcher_input_3 ,Switcher_input_4 ,Switcher_input_5,
+                                                           Switcher_input_6, Switcher_input_7, Switcher_input_8, Switcher_input_9, Switcher_input_10, 
+														   Switcher_input_11, Switcher_input_12, Switcher_input_13, Switcher_input_14, Switcher_input_15, Switcher_input_16,_skip_,
+  
+														   Switcher_to_Codec_Input_1, Switcher_to_Codec_Input_2, Switcher_to_Codec_Input_3, Switcher_to_Codec_Input_4, Switcher_to_Codec_Input_5,
+														   Switcher_to_Codec_Input_6 ,Switcher_to_Codec_Input_7, Switcher_to_Codec_Input_8, Switcher_to_Codec_Input_9, Switcher_to_Codec_Input_12,
+														   Switcher_to_Codec_Input_10, Switcher_to_Codec_Input_11, Switcher_to_Codec_Input_13, Switcher_to_Codec_Input_14, Switcher_to_Codec_Input_15,
+														   Switcher_to_Codec_Input_16,_skip_;
+// SIGNED_INTEGER_PARAMETER
+// LONG_INTEGER_PARAMETER
+// SIGNED_LONG_INTEGER_PARAMETER
+ STRING_PARAMETER 
+			      Source_1_Type[300], Source_2_Type[300], Source_3_Type[300], Source_4_Type[300], Source_5_Type[300],
+				  Source_6_Type[300], Source_7_Type[300], Source_8_Type[300], Source_9_Type[300], Source_10_Type[300],
+				  Source_11_Type[300], Source_12_Type[300], Source_13_Type[300], Source_14_Type[300], Source_15_Type[300],
+				  Source_16_Type[300],_skip_, 
+
+				  Source_1_Name[300], Source_2_Name[300], Source_3_Name[300], Source_4_Name[300], Source_5_Name[300],
+				  Source_6_Name[300], Source_7_Name[300], Source_8_Name[300], Source_9_Name[300], Source_10_Name[300],
+				  Source_11_Name[300], Source_12_Name[300], Source_13_Name[300], Source_14_Name[300], Source_15_Name[300],
+  				  Source_16_Name[300],_skip_;
+
+/*******************************************************************************************
+  Parameter Properties
+  (Uncomment and declare parameter properties as needed)
+*******************************************************************************************/
+
+
+/*******************************************************************************************
+  Global Variables
+  (Uncomment and declare global variables as needed)
+  Note:  Be sure to initialize all declared STRING variables as needed
+         For example, in Function Main: myString = "";
+*******************************************************************************************/
+ INTEGER codecOnline, codecOffline, addSourcesFlag, formatSourceIdentifiersFlag, Switcher_input[15],codecInput[15], initialized;
+// LONG_INTEGER
+// SIGNED_INTEGER
+// SIGNED_LONG_INTEGER
+ STRING incomingSourceString[10000], sourceName[15][300], sourceIdentifier[15][300], sourceType[15][300];
+
+/*******************************************************************************************
+  Functions
+  (Add any additional functions here)
+  Note:  Functions must be physically placed before the location in
+         the code that calls them.
+*******************************************************************************************/
+
+/*************************************************
+Set up the sources that will show on the Touch 10
+*************************************************/
+Function addSources()
+{
+	integer x;
+    
+    addSourcesFlag = 0;
+
+	makeString(To_Device$, "xcommand UserInterface Presentation ExternalSource RemoveAll\x0D");
+	
+	for(x = 0 to externalSources - 1)  
+    {				
+     makeString(To_Device$, "xCommand UserInterface Presentation ExternalSource Add ConnectorId: %d name: \x22%s\x22 SourceIdentifier: %s Type: %s\x0D", codecInput[x], sourceName[x], sourceIdentifier[x], sourceType[x]);
+		
+	 delay(100);
+	}	
+
+	addSourcesFlag = 1;
+}
+
+/*********************************************************** 
+Format the SourceIdentifier so there are no spaces or dashes
+************************************************************/
+Function formatSourceIdentifiers()
+{
+	integer x, firstWordLength, firstWordFlag;
+	string tempString[100], firstWord[100];
+	
+	formatSourceIdentifiersFlag = 0;
+
+	For(x = 0 to externalSources - 1)
+	{
+	 tempString = sourceName[x];
+	 trace("sourceName is %s", sourceName[x]);
+	 firstWord = Remove("\x20",  tempString);
+	 firstWordLength = Len(firstWord);
+	 firstWord = RemoveByLength(firstWordLength - 1, firstWord);
+	 sourceIdentifier[x] = firstWord + tempString;
+	 trace("sourceIdentifier: %s", sourceIdentifier[x]);
+	 firstWordFlag = Find("-", tempString);
+
+	 If(firstWordFlag > 0)
+		{
+	 	 firstWord = Remove("-",  tempString);
+	 	 firstWordLength = Len(firstWord);
+	 	 firstWord = RemoveByLength(firstWordLength - 1, firstWord);
+	 	 sourceIdentifier[x] = firstWord + tempString;
+		}	 	
+	 
+	 sourceIdentifier[x] = Lower(sourceIdentifier[x]);
+	
+	formatSourceIdentifiersFlag = 1;
+
+	}
+}
+ 
+/*******************************************************************
+Switch inputs on external switcher
+********************************************************************/   
+String_Function toSwitcher(String selectedSourceName)
+{
+ 	integer x, i;
+    
+	For(x = 0 to externalSources)
+	{
+	 If (sourceIdentifier[x] = selectedSourceName)
+	 {
+	
+	  To_Switcher = Switcher_input[x];
+
+	  pulse(50,input_selected_fb[x + 1]);
+ 	 }
+	}
+}
+
+/*******************************************************************************************************
+Evaluate incoming data for the user selected source from the Touch 10 and parse out the SourceIdentifier
+********************************************************************************************************/
+String_Function parseBuffer(String fQuote, string sQuote)
+{
+		integer i;
+
+		If (Find("ExternalSource Selected", incomingSourceString))
+			{
+							
+	 			fQuote = Remove("\x22", incomingSourceString);
+	 			sQuote = Remove("\x22", incomingSourceString);
+	 			i = Len(sQuote);
+	 			sQuote = Left(sQuote, i - 1);
+				
+			}
+}
+/*******************************************************************************************
+  Event Handlers
+  (Uncomment and declare additional event handlers as needed)
+*******************************************************************************************/
+
+Threadsafe PUSH codecIsOnline	
+{
+	codecOffline = 0;
+    codecOnline = 1;
+
+	makeString(To_Device$,"xFeedback register Event/UserInterface/Presentation/ExternalSource\x0D");
+
+	sourceName[0] = Source_1_Name;
+	sourceName[1] = Source_2_Name;
+	sourceName[2] = Source_3_Name;
+	sourceName[3] = Source_4_Name;
+	sourceName[4] = Source_5_Name;
+	sourceName[5] = Source_6_Name;
+	sourceName[6] = Source_7_Name;
+	sourceName[7] = Source_8_Name;
+	sourceName[8] = Source_9_Name;
+	sourceName[9] = Source_10_Name;
+	sourceName[10] = Source_11_Name;
+	sourceName[11] = Source_12_Name;
+	sourceName[12] = Source_13_Name;
+	sourceName[13] = Source_14_Name;
+	sourceName[14] = Source_15_Name;
+	sourceName[15] = Source_16_Name;
+     
+	sourceType[0] = Source_1_Type;
+	sourceType[1] = Source_2_Type;
+	sourceType[2] = Source_3_Type;
+	sourceType[3] = Source_4_Type;
+	sourceType[4] = Source_5_Type;
+	sourceType[5] = Source_6_Type;
+	sourceType[6] = Source_7_Type;
+	sourceType[7] = Source_8_Type;
+	sourceType[8] = Source_9_Type;
+	sourceType[9] = Source_10_Type;
+	sourceType[10] = Source_11_Type;
+	sourceType[11] = Source_12_Type;
+	sourceType[12] = Source_13_Type;
+	sourceType[13] = Source_14_Type;
+	sourceType[14] = Source_15_Type;
+	sourceType[15] = Source_16_Type;
+
+	Switcher_input[0] = Switcher_input_1;
+	Switcher_input[1] = Switcher_input_2;
+	Switcher_input[2] = Switcher_input_3;
+	Switcher_input[3] = Switcher_input_4;
+	Switcher_input[4] = Switcher_input_5;
+	Switcher_input[5] = Switcher_input_6;
+	Switcher_input[6] = Switcher_input_7;
+	Switcher_input[7] = Switcher_input_8;
+	Switcher_input[8] = Switcher_input_9;
+	Switcher_input[9] = Switcher_input_10;
+	Switcher_input[10] = Switcher_input_11;
+	Switcher_input[11] = Switcher_input_12;
+	Switcher_input[12] = Switcher_input_13;
+	Switcher_input[13] = Switcher_input_14;
+	Switcher_input[14] = Switcher_input_15;
+    Switcher_input[15] = Switcher_input_16;
+
+	codecInput[0] = Switcher_to_Codec_Input_1;
+	codecInput[1] = Switcher_to_Codec_Input_2;
+	codecInput[2] = Switcher_to_Codec_Input_3;
+	codecInput[3] = Switcher_to_Codec_Input_4;
+	codecInput[4] = Switcher_to_Codec_Input_5;	
+	codecInput[5] = Switcher_to_Codec_Input_6;
+	codecInput[6] = Switcher_to_Codec_Input_7;
+	codecInput[7] = Switcher_to_Codec_Input_8;
+	codecInput[8] = Switcher_to_Codec_Input_9;
+	codecInput[9] = Switcher_to_Codec_Input_10;
+	codecInput[10] = Switcher_to_Codec_Input_11;
+	codecInput[11] = Switcher_to_Codec_Input_12;
+	codecInput[12] = Switcher_to_Codec_Input_13;
+	codecInput[13] = Switcher_to_Codec_Input_14;
+	codecInput[14] = Switcher_to_Codec_Input_15;
+	codecInput[15] = Switcher_to_Codec_Input_16;
+
+
+ 
+	delay(100);
+
+	formatSourceIdentifiers();
+
+	delay(100);
+    
+	addSources();
+
+	initialized = 1;
+}
+
+PUSH codecIsOffline
+{
+	codecOnline = 0;
+	codecOffline = 1;
+
+	initialized = 0;
+}
+
+
+/*******************************************************************************************************
+Evaluate incoming data for the user selected source from the Touch 10 and parse out the SourceIdentifier
+********************************************************************************************************/
+
+THREADSAFE CHANGE From_Device$
+{
+	String firstQuote[2000], secondQuote[2000];
+
+	while(initialized)
+	{
+  		try
+		{ 
+			incomingSourceString = gather("\x0D",From_Device$); 	
+		
+                firstQuote = " ";
+				secondQuote = " ";
+				
+     			parseBuffer(firstQuote,secondQuote);
+				
+	 			toSwitcher(secondQuote);
+                 
+				ClearBuffer(From_Device$);
+				incomingSourceString = " ";
+				
+		
+		}
+		catch
+		{
+         	Print("Error processing data from CHANGE From_Device$ handler\n");
+		}
+				
+			
+	}
+
+}
+/******************************************************************************
+Set sources active and inactive depending on signal detection from the switcher
+*******************************************************************************/
+
+Change input_1_is_active
+{
+	trace("%d - %d",addSourcesFlag, formatSourceIdentifiersFlag);
+	if (input_1_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready\x0D", sourceIdentifier[0]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady\x0D", sourceIdentifier[0]);
+		}
+	
+	
+}
+
+Change input_2_is_active
+{
+	
+	if (input_2_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[1]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[1]);
+		}	
+
+
+}
+Change input_3_is_active
+{
+	
+	if (input_3_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[2]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[2]);
+		}	
+
+		
+}
+Change input_4_is_active
+{
+	
+	if (input_4_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[3]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[3]);
+		}	
+
+
+}
+Change input_5_is_active
+{
+	
+	if (input_5_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[4]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[4]);
+		}	
+}
+Change input_6_is_active
+{
+	
+	if (input_6_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[5]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[5]);
+		}	
+
+	
+}
+Change input_7_is_active
+{
+	
+	if (input_7_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[6]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[6]);
+		}	
+
+
+}
+Change input_8_is_active
+{
+	
+	if (input_8_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[7]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[7]);
+		}	
+
+	
+}
+Change input_9_is_active
+{
+	
+	if (input_9_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[7]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[7]);
+		}	
+
+	
+}
+Change input_10_is_active
+{
+	
+	if (input_10_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[7]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[7]);
+		}	
+
+	
+}
+Change input_11_is_active
+{
+	
+	if (input_11_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[7]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[7]);
+		}	
+
+	
+}
+Change input_12_is_active
+{
+	
+	if (input_12_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[7]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[7]);
+		}	
+
+	
+}
+Change input_13_is_active
+{
+	
+	if (input_13_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[7]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[7]);
+		}	
+
+	
+}
+Change input_14_is_active
+{
+	
+	if (input_14_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[7]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[7]);
+		}	
+
+	
+}
+Change input_15_is_active
+{
+	
+	if (input_15_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[7]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[7]);
+		}	
+
+	
+}
+Change input_16_is_active
+{
+	
+	if (input_16_is_active && addSourcesFlag = 1 && formatSourceIdentifiersFlag = 1)
+	{
+	 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: Ready \x0D", sourceIdentifier[7]);
+	}
+	Else
+		{
+		 makeString(To_Device$,"xCommand UserInterface Presentation ExternalSource State Set SourceIdentifier: %s State: NotReady \x0D", sourceIdentifier[7]);
+		}	
+
+	
+}
+
+
+
+/*******************************************************************************************
+  Main()
+  Uncomment and place one-time startup code here
+  (This code will get called when the system starts up)
+*******************************************************************************************/
+
+Function Main()
+{
+	codecOnline = 0;
+	codecOffline = 0;
+    initialized = 0;                 	
+
+
+}
+
+
