@@ -5,10 +5,10 @@
 *******************************************************************************************/
 /*
 Dealer Name:
-System Name:
+System Name: Cisco External Switching
 System Number:
 Programmer:JGK
-Comments:
+Comments: This program allows for 3rd party switchers to be used with Cisco video endpoints.
 */
 
 /*******************************************************************************************
@@ -76,9 +76,7 @@ Comments:
 														   Switcher_to_Codec_Input_6 ,Switcher_to_Codec_Input_7, Switcher_to_Codec_Input_8, Switcher_to_Codec_Input_9, Switcher_to_Codec_Input_12,
 														   Switcher_to_Codec_Input_10, Switcher_to_Codec_Input_11, Switcher_to_Codec_Input_13, Switcher_to_Codec_Input_14, Switcher_to_Codec_Input_15,
 														   Switcher_to_Codec_Input_16,_skip_;
-// SIGNED_INTEGER_PARAMETER
-// LONG_INTEGER_PARAMETER
-// SIGNED_LONG_INTEGER_PARAMETER
+
  STRING_PARAMETER 
 			      Source_1_Type[300], Source_2_Type[300], Source_3_Type[300], Source_4_Type[300], Source_5_Type[300],
 				  Source_6_Type[300], Source_7_Type[300], Source_8_Type[300], Source_9_Type[300], Source_10_Type[300],
